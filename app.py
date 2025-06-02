@@ -6,40 +6,49 @@ from io import BytesIO
 
 app = FastAPI()
 
-# ฟังก์ชันโหลดภาพจาก URL
+
 def load_image_from_url(url):
+    """โหลดภาพจาก URL"""
     response = requests.get(url)
     response.raise_for_status()
     return Image.open(BytesIO(response.content)).convert("RGBA")
+
 
 @app.get("/")
 def read_root():
     return {"message": "✅ Image merge API is running"}
 
+
 @app.post("/merge")
 def merge_images():
-    # URLs
+    # URLs ของภาพ
     cover_url = "https://pub-a596a6a5511b481cb3740594776a7747.r2.dev/PGZEEDAUTO%20COVER.png"
     main_url = "https://oaidalleapiprodscus.blob.core.windows.net/private/org-NRB6PfiDynQuB1og3W4Gfz5n/user-yFgbWYdM6RNDf9lat9ysGn6s/img-2sZuraf4xbMS8416F3YEz5Jz.png?st=2025-06-02T13%3A12%3A50Z&se=2025-06-02T15%3A12%3A50Z&sp=r&sv=2024-08-04&sr=b&rscd=inline&rsct=image/png&skoid=cc612491-d948-4d2e-9821-2683df3719f5&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-06-02T04%3A06%3A19Z&ske=2025-06-03T04%3A06%3A19Z&sks=b&skv=2024-08-04&sig=boxVZadlwqFY4rSy2Ih9cq%2Bg0xqaLHvH0XhpirI/qrA%3D"
     logo_url = "https://pgzeedauto.games/wp-content/uploads/elementor/thumbs/cropped-pgzeedauto-logo-1-qrv2jpriuez7sj7kzrhgmhn6je94zppamhjucngrog.webp"
 
-    # โหลดภาพ
+    # โหลดภาพจาก URL
     cover = load_image_from_url(cover_url)
     main = load_image_from_url(main_url)
     logo = load_image_from_url(logo_url)
 
-    # ปรับขนาด main ให้พอดีกับ cover
+    # ปรับขนาด main ให้พอดีกับความกว้างของ cover
     main_resized = main.resize((cover.width, int(main.height * (cover.width / main.width))))
     cover.paste(main_resized, (0, 0), main_resized)
 
-    # ปรับขนาด logo แล้ววางมุมขวาบน
+    # ปรับขนาดและวางโลโก้ด้านขวาบน
     logo_resized = logo.resize((200, 200))
     logo_position = (cover.width - 200 - 15, 15)
     cover.paste(logo_resized, logo_position, logo_resized)
 
-    # บันทึกภาพรวมผลลัพธ์ลงใน /tmp (เหมาะกับ Railway)
+    # บันทึกผลลงใน /tmp ซึ่งรองรับใน Railway
     output_path = "/tmp/final_combined_image.png"
     cover.save(output_path)
 
-    # ส่งกลับเป็นไฟล์
+    # ส่งไฟล์ภาพกลับ
     return FileResponse(output_path, media_type="image/png", filename="merged.png")
+
+
+# ช่วยให้รันท้องถิ่นได้ด้วย (optional)
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app:app", host="0.0.0.0", port=8000)
