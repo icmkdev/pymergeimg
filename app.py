@@ -37,9 +37,9 @@ def merge_images():
     logo_position = (cover.width - 200 - 15, 15)
     cover.paste(logo_resized, logo_position, logo_resized)
 
-    # บันทึกไฟล์ผลลัพธ์
-    output_path = "final_combined_image.png"
+    # บันทึกภาพรวมผลลัพธ์ลงใน /tmp (เหมาะกับ Railway)
+    output_path = "/tmp/final_combined_image.png"
     cover.save(output_path)
 
-    # ส่งไฟล์กลับ
+    # ส่งกลับเป็นไฟล์
     return FileResponse(output_path, media_type="image/png", filename="merged.png")
